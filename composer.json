@@ -1,0 +1,26 @@
+{
+    "name": "forestry/cedar-forms-module",
+    "description": "Forms module for CedarCMS Core — form builder, submissions, and spam defenses.",
+    "type": "library",
+    "keywords": ["cedar", "cedarcms", "cms", "module", "forms", "laravel", "filament"],
+    "license": "MIT",
+    "homepage": "https://github.com/forestrylabs/cedar-forms-module",
+    "require": {
+        "php": "^8.5",
+        "forestry/cedar-cms-core": "*"
+    },
+    "autoload": {
+        "psr-4": {
+            "Modules\\Forms\\": "src/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Modules\\Forms\\FormsServiceProvider"
+            ]
+        }
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}
