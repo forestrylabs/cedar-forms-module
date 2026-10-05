@@ -25,6 +25,6 @@ class FormsStarterSeeder extends FormsSeeder
             return;
         }
 
-        parent::run();
+        $this->contact();
     }
 }

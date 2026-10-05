@@ -9,18 +9,26 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Modules\Forms\Database\Factories\FormFactory;
 
 #[Fillable([
-    'name', 'slug', 'success_message', 'recipients', 'fields', 'captcha_enabled', 'store_submissions',
+    'name', 'slug', 'success_message', 'recipients', 'fields', 'settings', 'captcha_enabled', 'store_submissions',
 ])]
 class Form extends Model
 {
     /** @use HasFactory<FormFactory> */
     use HasFactory;
 
+    /** Allowed values for the constrained appearance settings (first is the default). */
+    public const LAYOUTS = ['stacked' => 'Stacked', 'inline' => 'Inline (fields and button on one row)'];
+
+    public const WIDTHS = ['contained' => 'Contained', 'full' => 'Full width'];
+
+    public const STYLES = ['plain' => 'Plain', 'card' => 'Card'];
+
     protected function casts(): array
     {
         return [
             'recipients' => 'array',
             'fields' => 'array',
+            'settings' => 'array',
             'captcha_enabled' => 'boolean',
             'store_submissions' => 'boolean',
         ];
@@ -29,6 +37,27 @@ class Form extends Model
     protected static function newFactory(): FormFactory
     {
         return FormFactory::new();
+    }
+
+    /**
+     * An appearance setting (layout, width, style, button_label), falling back
+     * to the default when unset or no longer one of the allowed values.
+     */
+    public function setting(string $key): string
+    {
+        $value = $this->settings[$key] ?? null;
+
+        if ($key === 'button_label') {
+            return filled($value) ? (string) $value : 'Submit';
+        }
+
+        $allowed = match ($key) {
+            'layout' => self::LAYOUTS,
+            'width' => self::WIDTHS,
+            'style' => self::STYLES,
+        };
+
+        return array_key_exists((string) $value, $allowed) ? $value : array_key_first($allowed);
     }
 
     public function submissions(): HasMany

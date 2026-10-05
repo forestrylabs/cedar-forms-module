@@ -1,26 +1,62 @@
-<div>
+@php
+    $layout = $form->setting('layout');
+    $style = $form->setting('style');
+    $width = in_array($width ?? '', ['contained', 'full'], true) ? $width : $form->setting('width');
+    $inline = $layout === 'inline';
+@endphp
+
+{{-- Base styles use zero-specificity :where() selectors and the theme's CSS tokens
+     (with fallbacks), so any theme can restyle the .cedar-form__* hooks — or
+     override this whole view at themes/<theme>/views/modules/forms/. --}}
+@once
+    <style>
+        :where(.cedar-form) { --cf-radius: var(--radius, .5rem); --cf-primary: var(--color-primary, #2563eb); --cf-text: var(--color-secondary, #0f172a); --cf-surface: var(--color-surface, #fff); --cf-line: color-mix(in oklab, var(--cf-text) 20%, var(--cf-surface)); --cf-muted: color-mix(in oklab, var(--cf-text) 65%, var(--cf-surface)); --cf-error: #b91c1c; width: 100%; }
+        :where(.cedar-form--contained) { max-width: 36rem; }
+        :where(.cedar-form--card) { padding: 1.5rem; border: 1px solid var(--cf-line); border-radius: var(--cf-radius); background: color-mix(in oklab, var(--cf-primary) 6%, var(--cf-surface)); }
+        :where(.cedar-form__form) { display: flex; flex-direction: column; gap: 1rem; }
+        :where(.cedar-form__field) { display: flex; flex-direction: column; gap: .25rem; min-width: 0; }
+        :where(.cedar-form__label) { font-size: .875rem; font-weight: 500; color: var(--cf-text); }
+        :where(.cedar-form__label--hidden) { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+        :where(.cedar-form__input) { width: 100%; box-sizing: border-box; padding: .5rem .75rem; border: 1px solid var(--cf-line); border-radius: var(--cf-radius); background: var(--cf-surface); color: var(--cf-text); font: inherit; }
+        :where(.cedar-form__input:focus) { outline: 2px solid var(--cf-primary); outline-offset: 1px; border-color: var(--cf-primary); }
+        :where(.cedar-form__choice) { display: flex; align-items: center; gap: .5rem; font-size: .875rem; color: var(--cf-text); }
+        :where(.cedar-form__choices) { display: flex; flex-direction: column; gap: .5rem; }
+        :where(.cedar-form__choice input) { accent-color: var(--cf-primary); }
+        :where(.cedar-form__error) { margin: 0; font-size: .875rem; color: var(--cf-error); }
+        :where(.cedar-form__submit) { align-self: flex-start; padding: .75rem 1.5rem; border: 0; border-radius: var(--cf-radius); background: var(--cf-primary); color: #fff; font: inherit; font-weight: 500; cursor: pointer; }
+        :where(.cedar-form__submit:hover) { filter: brightness(1.08); }
+        :where(.cedar-form__success) { margin: 0; padding: .75rem 1rem; border-radius: var(--cf-radius); background: color-mix(in oklab, var(--cf-primary) 10%, var(--cf-surface)); color: var(--cf-text); }
+        :where(.cedar-form--inline .cedar-form__form) { flex-direction: row; flex-wrap: wrap; align-items: flex-end; }
+        :where(.cedar-form--inline .cedar-form__field) { flex: 1 1 12rem; }
+        :where(.cedar-form--inline .cedar-form__field--wide, .cedar-form--inline .cedar-form__error--form) { flex-basis: 100%; }
+        :where(.cedar-form--inline .cedar-form__submit) { align-self: flex-end; }
+    </style>
+@endonce
+
+<div class="cedar-form cedar-form--{{ $layout }} cedar-form--{{ $width }} cedar-form--{{ $style }}">
     @if ($submitted)
-        <p class="rounded-[var(--radius)] bg-slate-50 px-4 py-3 text-slate-700">{{ $form->success_message ?: "Thanks — we'll be in touch soon." }}</p>
+        <p class="cedar-form__success">{{ $form->success_message ?: "Thanks — we'll be in touch soon." }}</p>
     @else
-        @php
-            $inputClasses = 'w-full rounded-[var(--radius)] border border-slate-300 px-3 py-2 text-slate-900 focus:border-[color:var(--color-primary)] focus:outline-none focus:ring-1 focus:ring-[color:var(--color-primary)]';
-        @endphp
-        <form wire:submit="submit" class="flex max-w-xl flex-col gap-4">
-            @error('form') <p class="text-sm text-red-600">{{ $message }}</p> @enderror
+        <form wire:submit="submit" class="cedar-form__form">
+            @error('form') <p class="cedar-form__error cedar-form__error--form">{{ $message }}</p> @enderror
 
             @foreach ($form->fields as $field)
-                <div class="flex flex-col gap-1">
+                @php
+                    $wide = in_array($field['type'], ['textarea', 'radio', 'checkbox'], true);
+                    $hideLabel = $inline && ! $wide && filled($field['placeholder'] ?? null);
+                @endphp
+                <div class="cedar-form__field @if ($wide) cedar-form__field--wide @endif">
                     @unless ($field['type'] === 'hidden' || $field['type'] === 'checkbox')
-                        <label for="field-{{ $field['name'] }}" class="text-sm font-medium text-slate-700">{{ $field['label'] }}</label>
+                        <label for="field-{{ $field['name'] }}" class="cedar-form__label @if ($hideLabel) cedar-form__label--hidden @endif">{{ $field['label'] }}</label>
                     @endunless
 
                     @switch($field['type'])
                         @case('textarea')
-                            <textarea id="field-{{ $field['name'] }}" wire:model="values.{{ $field['name'] }}" placeholder="{{ $field['placeholder'] ?? '' }}" rows="4" class="{{ $inputClasses }}"></textarea>
+                            <textarea id="field-{{ $field['name'] }}" wire:model="values.{{ $field['name'] }}" placeholder="{{ $field['placeholder'] ?? '' }}" rows="4" class="cedar-form__input"></textarea>
                             @break
 
                         @case('select')
-                            <select id="field-{{ $field['name'] }}" wire:model="values.{{ $field['name'] }}" class="{{ $inputClasses }}">
+                            <select id="field-{{ $field['name'] }}" wire:model="values.{{ $field['name'] }}" class="cedar-form__input">
                                 <option value="">{{ $field['placeholder'] ?? 'Select…' }}</option>
                                 @foreach ($field['options'] ?? [] as $option)
                                     <option value="{{ $option }}">{{ $option }}</option>
@@ -29,10 +65,10 @@
                             @break
 
                         @case('radio')
-                            <div class="flex flex-col gap-2">
+                            <div class="cedar-form__choices">
                                 @foreach ($field['options'] ?? [] as $option)
-                                    <label class="flex items-center gap-2 text-sm text-slate-700">
-                                        <input type="radio" wire:model="values.{{ $field['name'] }}" value="{{ $option }}" class="text-[color:var(--color-primary)] focus:ring-[color:var(--color-primary)]">
+                                    <label class="cedar-form__choice">
+                                        <input type="radio" wire:model="values.{{ $field['name'] }}" value="{{ $option }}">
                                         {{ $option }}
                                     </label>
                                 @endforeach
@@ -40,8 +76,8 @@
                             @break
 
                         @case('checkbox')
-                            <label class="flex items-center gap-2 text-sm text-slate-700">
-                                <input type="checkbox" id="field-{{ $field['name'] }}" wire:model="values.{{ $field['name'] }}" class="rounded text-[color:var(--color-primary)] focus:ring-[color:var(--color-primary)]">
+                            <label class="cedar-form__choice">
+                                <input type="checkbox" id="field-{{ $field['name'] }}" wire:model="values.{{ $field['name'] }}">
                                 {{ $field['label'] }}
                             </label>
                             @break
@@ -56,11 +92,11 @@
                                 id="field-{{ $field['name'] }}"
                                 wire:model="values.{{ $field['name'] }}"
                                 placeholder="{{ $field['placeholder'] ?? '' }}"
-                                class="{{ $inputClasses }}"
+                                class="cedar-form__input"
                             >
                     @endswitch
 
-                    @error('values.'.$field['name']) <p class="text-sm text-red-600">{{ $message }}</p> @enderror
+                    @error('values.'.$field['name']) <p class="cedar-form__error">{{ $message }}</p> @enderror
                 </div>
             @endforeach
 
@@ -73,7 +109,7 @@
                 <x-captcha field="captcha_token" />
             @endif
 
-            <button type="submit" class="inline-block w-fit rounded-[var(--radius)] bg-[color:var(--color-primary)] px-6 py-3 font-medium text-white">Submit</button>
+            <button type="submit" class="cedar-form__submit">{{ $form->setting('button_label') }}</button>
         </form>
     @endif
 </div>

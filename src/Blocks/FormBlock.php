@@ -32,6 +32,11 @@ class FormBlock extends Block
                 ->options(fn () => Form::query()->orderBy('name')->pluck('name', 'id'))
                 ->searchable()
                 ->required(),
+            Select::make('width')
+                ->label('Width')
+                ->options(['inherit' => 'Use the form\'s setting', ...Form::WIDTHS])
+                ->default('inherit')
+                ->native(false),
         ];
     }
 }

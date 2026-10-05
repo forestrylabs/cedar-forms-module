@@ -24,6 +24,28 @@ class FormsSeeder extends Seeder
 
     public function run(): void
     {
+        $this->contact();
+        $this->newsletter();
+    }
+
+    /** A single-field, inline "subscribe" form: a showcase for the compact layout. */
+    protected function newsletter(): void
+    {
+        Form::updateOrCreate(['slug' => 'newsletter'], [
+            'name' => 'Newsletter signup',
+            'success_message' => 'Thanks for subscribing!',
+            'recipients' => $this->recipients(),
+            'fields' => [
+                ['type' => 'email', 'name' => 'email', 'label' => 'Email address', 'placeholder' => 'you@example.com', 'required' => true, 'options' => [], 'max_length' => 255],
+            ],
+            'settings' => ['layout' => 'inline', 'width' => 'full', 'style' => 'card', 'button_label' => 'Subscribe'],
+            'captcha_enabled' => false,
+            'store_submissions' => true,
+        ]);
+    }
+
+    protected function contact(): void
+    {
         $form = Form::updateOrCreate(['slug' => 'contact'], [
             'name' => 'Contact',
             'success_message' => "Thanks for reaching out — we'll be in touch soon.",

@@ -6,6 +6,7 @@ use App\Facades\Captcha;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Validation\Rule;
+use Livewire\Attributes\Locked;
 use Livewire\Component;
 use Modules\Forms\Models\Form;
 use Modules\Forms\Models\FormSubmission;
@@ -28,9 +29,14 @@ class FormRenderer extends Component
     /** ISO timestamp captured at mount, used for the min-submit-time check. */
     public string $renderedAt;
 
-    public function mount(Form $form): void
+    /** Per-placement width override from the Form block ('' = use the form's own). */
+    #[Locked]
+    public string $width = '';
+
+    public function mount(Form $form, string $width = ''): void
     {
         $this->form = $form;
+        $this->width = $width === 'inherit' ? '' : $width;
         $this->renderedAt = now()->toISOString();
 
         foreach ($form->fields as $field) {

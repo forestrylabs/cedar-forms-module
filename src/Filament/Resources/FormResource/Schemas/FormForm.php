@@ -43,6 +43,16 @@ class FormForm
                         ->helperText('Keep a copy of each submission in the admin, in addition to emailing recipients.'),
                 ])
                 ->columns(2),
+            Section::make('Appearance')
+                ->description('How the form looks on the page. The theme controls colours and fonts.')
+                ->schema([
+                    Select::make('settings.layout')->label('Layout')->options(Form::LAYOUTS)->default('stacked')->required()->native(false),
+                    Select::make('settings.width')->label('Width')->options(Form::WIDTHS)->default('contained')->required()->native(false)
+                        ->helperText('A Form block can override this where it is placed.'),
+                    Select::make('settings.style')->label('Style')->options(Form::STYLES)->default('plain')->required()->native(false),
+                    TextInput::make('settings.button_label')->label('Button label')->default('Submit')->maxLength(40),
+                ])
+                ->columns(2),
             Section::make('Recipients')
                 ->schema([
                     Repeater::make('recipients')
